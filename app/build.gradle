@@ -1,3 +1,22 @@
 plugins { id 'com.android.application' }
 android { namespace 'com.broadcasttech.tools'; compileSdk 35
- defaultConfig { applicationId 'com.broadcasttech.tools'; minSdk 26; targetSdk 35; versionCode 1; versionName '0.1' } }
+ defaultConfig { applicationId 'com.broadcasttech.tools'; minSdk 26; targetSdk 35; versionCode 2; versionName '1.0' } }
+
+// Run the exact production calculation/state classes without Android mocks.
+def regressionClasses = layout.buildDirectory.dir('calculator-regression')
+tasks.register('compileCalculatorRegression', JavaCompile) {
+    source = files('src/main/java/com/broadcasttech/tools/Calculator.java',
+            'src/main/java/com/broadcasttech/tools/CalculatorState.java',
+            'src/test/java/com/broadcasttech/tools/CalculatorRegression.java')
+    classpath = files()
+    destinationDirectory = regressionClasses
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+    options.encoding = 'UTF-8'
+}
+tasks.register('verifyCalculators', JavaExec) {
+    dependsOn 'compileCalculatorRegression'
+    classpath = files(regressionClasses)
+    mainClass = 'com.broadcasttech.tools.CalculatorRegression'
+}
+tasks.named('preBuild') { dependsOn 'verifyCalculators' }
